@@ -125,11 +125,11 @@ void RegisterModel::fromXml(uint16_t plc_addr, QXmlStreamReader *reader)
 {
     reader->readNext();
     if (reader->tokenType() == QXmlStreamReader::Characters) {
-        QStringRef string = reader->text();
-        QByteArray data = QByteArray::fromBase64(string.toUtf8());
+        QByteArray data = QByteArray::fromBase64(reader->text().string()->toLatin1());
 
+        _data[plc_addr].clear();
         for(int i = 0; i < data.count(); i+=2) {
-            _data[plc_addr][i/2] = (data.at(i) << 8) | data.at(i+1);
+            _data[plc_addr].push_back( ((uint16_t)data.at(i) << 8) | (data.at(i+1) & 0x00ffu) );
         }
     }
 }
@@ -137,13 +137,12 @@ void RegisterModel::fromXml(uint16_t plc_addr, QXmlStreamReader *reader)
 void RegisterModel::toXml(uint16_t plc_addr, QXmlStreamWriter *writer) const
 {
     QByteArray bytes;
-    bytes.resize(2 * _data.value(plc_addr).count());
 
     // Convert from QBitArray to QByteArray
     for(auto i = 0; i < _data.value(plc_addr).count(); ++i) {
-        bytes[2*i]   = _data.value(plc_addr).at(i) >> 8;
-        bytes[2*i+1] = _data.value(plc_addr).at(i) & 0xff;
+        bytes.push_back(_data.value(plc_addr).at(i) >> 8);
+        bytes.push_back(_data.value(plc_addr).at(i) & 0xff);
     }
 
-    writer->writeCharacters(bytes.toBase64());
+    writer->writeCharacters(QString::fromLatin1(bytes.toBase64()));
 }
