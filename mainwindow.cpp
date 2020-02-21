@@ -133,6 +133,10 @@ void MainWindow::readData()
 
     input += new_data;
 
+    if(input.size() > 180) {
+        input.clear();
+    }
+
     timer->start(_interval); // Межбайтовый интервал
 }
 
